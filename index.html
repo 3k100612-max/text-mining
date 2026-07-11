@@ -69,7 +69,7 @@
 
   textarea {
     width: 100%;
-    min-height: 130px;
+    min-height: 150px;
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -88,12 +88,21 @@
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
+    align-items: center;
     margin: 18px 0;
   }
 
   input[type="text"] {
     flex: 1;
     min-width: 200px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  input[type="number"] {
+    width: 100px;
     padding: 10px 12px;
     border: 1px solid #ccc;
     border-radius: 8px;
@@ -152,20 +161,9 @@
     border: 1px solid #cbd5e1;
   }
 
-  .signal {
-    color: #15803d;
-    font-weight: 700;
-  }
-
-  .noise {
-    color: #dc2626;
-    font-weight: 700;
-  }
-
-  .neutral {
-    color: #a16207;
-    font-weight: 700;
-  }
+  .signal { color: #15803d; font-weight: 700; }
+  .noise { color: #dc2626; font-weight: 700; }
+  .neutral { color: #a16207; font-weight: 700; }
 
   .worked {
     background: #ecfdf5;
@@ -243,18 +241,52 @@
       </ul>
     </div>
 
+    <div class="formula-card">
+      <h2>How the Analyzer Removes Noise</h2>
+      <ul class="legend">
+        <li>
+          <b>General stop words:</b> common English words such as
+          <code>the</code>, <code>a</code>, and <code>is</code>. These appear
+          everywhere and rarely describe a topic.
+        </li>
+        <li>
+          <b>Corpus stop words:</b> words that occur in almost every document in
+          this particular dataset. For example, <code>contract</code> is a real
+          English word, but in 1,000 legal contracts it appears in nearly 100%
+          of them, so it becomes noise for that dataset.
+        </li>
+        <li>
+          <b>Threshold (max_df):</b> when set to <code>0.85</code>, any word
+          appearing in more than 85% of documents is classified as corpus noise.
+        </li>
+      </ul>
+    </div>
+
     <label for="docsInput">Your documents (one per line)</label>
 
-    <textarea id="docsInput">This simulation acts as a 'mathematical filter' that mutes the noise of common words like 'is' and amplifies the signal of unique keywords like 'extracting' to help the computer understand what a document is truly about`.</textarea>
+    <textarea id="docsInput">The contract requires a signature from both parties.
+The contract explains the payment rules and legal duties.
+The contract includes a clause about confidentiality.
+The contract states the delivery date for the goods.
+The customer requested a refund for a damaged product.
+The customer said the battery life was excellent.</textarea>
 
     <div class="hint">
-      Each line is treated as one document. You can replace these samples with your own sentences.
+      Each line is treated as one document. Try the word <code>contract</code>
+      (corpus noise) versus <code>customer</code> or <code>battery</code> (signal).
     </div>
 
     <div class="controls">
-      <input type="text" id="wordInput" placeholder="Enter a word, for example: mining" />
+      <input type="text" id="wordInput" placeholder="Enter a word, for example: contract" />
+      <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05"
+             value="0.85" title="Corpus noise threshold (max_df)" />
       <button onclick="analyze()">Analyze</button>
       <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
+    </div>
+
+    <div class="hint">
+      Corpus-noise threshold (max_df): a word found in more than this fraction
+      of documents is treated as corpus noise. Default 0.85 = 85%.
     </div>
 
     <div id="output"></div>
@@ -266,12 +298,19 @@
 
 <script>
   const SAMPLE_DOCS =
-`This simulation acts as a 'mathematical filter' that mutes the noise of common words like 'is' and amplifies the signal of unique keywords like 'extracting' to help the computer understand what a document is truly about`;
+`The contract requires a signature from both parties.
+The contract explains the payment rules and legal duties.
+The contract includes a clause about confidentiality.
+The contract states the delivery date for the goods.
+The customer requested a refund for a damaged product.
+The customer said the battery life was excellent.`;
 
+  // General English stop words (always noise)
   const STOP_WORDS = [
-    "a", "an", "and", "are", "as", "at", "be", "by", "for",
-    "from", "in", "is", "it", "of", "on", "or", "the", "to",
-    "with", "was", "were", "this", "that"
+    "a", "an", "and", "are", "as", "at", "be", "both", "by", "for",
+    "from", "had", "has", "have", "he", "her", "his", "in", "is", "it",
+    "its", "of", "on", "or", "our", "she", "so", "the", "their", "them",
+    "they", "this", "that", "to", "was", "were", "will", "with", "you"
   ];
 
   function getDocuments() {
@@ -283,6 +322,7 @@
 
   function resetDocs() {
     document.getElementById("docsInput").value = SAMPLE_DOCS;
+    document.getElementById("thresholdInput").value = "0.85";
     document.getElementById("output").innerHTML = "";
   }
 
@@ -305,6 +345,8 @@
     const output = document.getElementById("output");
     const documents = getDocuments();
 
+    const maxDf = Number(document.getElementById("thresholdInput").value);
+
     if (!documents.length) {
       output.innerHTML = "<p class='no'>Please add at least one document.</p>";
       return;
@@ -315,17 +357,18 @@
       return;
     }
 
+    if (Number.isNaN(maxDf) || maxDf <= 0 || maxDf > 1) {
+      output.innerHTML =
+        "<p class='no'>Please enter a threshold between 0.1 and 1 (for example 0.85 = 85%).</p>";
+      return;
+    }
+
     const safeWord = escapeHTML(word);
 
     const counts = documents.map((doc, i) => {
       const words = cleanWordList(doc);
       const count = words.filter(currentWord => currentWord === word).length;
-
-      return {
-        doc: `Doc ${i + 1}`,
-        text: doc,
-        count: count
-      };
+      return { doc: `Doc ${i + 1}`, text: doc, count: count };
     });
 
     const N = documents.length;
@@ -367,7 +410,6 @@
             so there is no TF-IDF score to calculate.
           </p>
         </div>`;
-
       output.innerHTML = html;
       return;
     }
@@ -377,6 +419,7 @@
 
     const documentPercentage = (nt / N) * 100;
     const signalPercentage = Math.max(0, 100 - documentPercentage);
+    const thresholdPercentage = maxDf * 100;
     const isStopWord = STOP_WORDS.includes(word);
 
     let classification = "";
@@ -384,37 +427,56 @@
     let explanation = "";
 
     if (isStopWord) {
-      classification = "NOISE";
+      classification = "GENERAL STOP WORD: NOISE";
       className = "noise";
-      explanation = `The word "${safeWord}" is a common stop word. Words such as "the", "and", and "is" usually do not describe the topic of a document, so text-mining systems often remove them.`;
-    } else if (nt === N) {
-      classification = "NOISE";
+      explanation =
+        `The word "${safeWord}" is a general English stop word. Words such as ` +
+        `"the", "a", and "is" appear frequently but do not describe the topic, ` +
+        `so text-mining tools remove them using a standard stop-word list.`;
+
+    } else if ((nt / N) > maxDf) {
+      classification = "CORPUS STOP WORD: NOISE";
       className = "noise";
-      explanation = `The word "${safeWord}" appears in every document. It cannot distinguish one document from another, so it provides very little useful information.`;
-    } else if (nt > N / 2) {
+      explanation =
+        `The word "${safeWord}" appears in ${nt} of ${N} documents ` +
+        `(${documentPercentage.toFixed(0)}%), which is above the ` +
+        `${thresholdPercentage.toFixed(0)}% threshold (max_df = ${maxDf}). ` +
+        `It may be a real keyword, but it is too common in THIS dataset to ` +
+        `tell documents apart, so it is treated as corpus noise.`;
+
+    } else if ((nt / N) > 0.50) {
       classification = "WEAK SIGNAL / POSSIBLE NOISE";
       className = "neutral";
-      explanation = `The word "${safeWord}" appears in many documents. It has some meaning, but it is not very specific because it does not strongly separate one topic from another.`;
+      explanation =
+        `The word "${safeWord}" appears in ${documentPercentage.toFixed(0)}% of ` +
+        `the documents. It carries some meaning, but it is shared by many ` +
+        `documents, so it is only a weak signal.`;
+
     } else {
       classification = "SIGNAL";
       className = "signal";
-      explanation = `The word "${safeWord}" appears in relatively few documents. This makes it more useful for identifying a topic or distinguishing a document from the others.`;
+      explanation =
+        `The word "${safeWord}" appears in only ${nt} of ${N} documents ` +
+        `(${documentPercentage.toFixed(0)}%). It is specific, so it is a useful ` +
+        `signal for identifying the topic of a document.`;
     }
 
     html += `
       <div class="signal-card">
         <h2>Signal and Noise Check</h2>
 
-        <p>
-          Classification:
-          <span class="${className}">${classification}</span>
-        </p>
+        <p>Classification: <span class="${className}">${classification}</span></p>
+
+        <p>Corpus frequency: <b>${nt} / ${N}</b> documents
+           (${documentPercentage.toFixed(0)}%)</p>
+
+        <p>Corpus-noise threshold (max_df):
+           <b>${thresholdPercentage.toFixed(0)}%</b></p>
 
         <div class="meter-label">
           <span>Noise: common across documents</span>
           <span>${documentPercentage.toFixed(0)}%</span>
         </div>
-
         <div class="meter">
           <div class="meter-fill noise-fill" style="width: ${documentPercentage}%"></div>
         </div>
@@ -423,7 +485,6 @@
           <span>Signal: more specific to fewer documents</span>
           <span>${signalPercentage.toFixed(0)}%</span>
         </div>
-
         <div class="meter">
           <div class="meter-fill signal-fill" style="width: ${signalPercentage}%"></div>
         </div>
@@ -435,14 +496,10 @@
       <div class="explanation">
         <h2>TF-IDF Explanation</h2>
 
-        <p>
-          The word "<b>${safeWord}</b>" appears in
-          <b>${nt}</b> out of <b>${N}</b> documents.
-        </p>
+        <p>The word "<b>${safeWord}</b>" appears in
+           <b>${nt}</b> out of <b>${N}</b> documents.</p>
 
-        <p>
-          In Document 1, it appears <b>${tfDoc1}</b> time(s).
-        </p>
+        <p>In Document 1, it appears <b>${tfDoc1}</b> time(s).</p>
 
         <div class="worked">
           $$w_{\\text{${safeWord}},d_1}
@@ -456,7 +513,8 @@
           <b>Sentence for class:</b>
           The word "${safeWord}" appears in ${nt} of the ${N} documents.
           Its IDF score is ${idf.toFixed(2)}. A higher IDF means the word is
-          more specific and is more likely to act as a useful signal.
+          rarer and therefore a stronger signal. A very low IDF means the word
+          is common and closer to noise.
         </p>
       </div>`;
 
@@ -465,16 +523,16 @@
         <h2>Connecting the Simulation to the Python Results</h2>
 
         <p>
-          This website performs the same basic TF-IDF idea as your Python code.
-          Both methods first count the word in each document, determine how many
-          documents contain it, and then calculate an importance score.
+          This website uses the same TF-IDF idea as scikit-learn. The
+          <code>max_df</code> threshold you set here matches the
+          <code>max_df</code> argument in Python.
         </p>
 
         <table>
           <thead>
             <tr>
               <th>Simulation value</th>
-              <th>Meaning in this website</th>
+              <th>Meaning here</th>
               <th>Equivalent Python idea</th>
             </tr>
           </thead>
@@ -495,6 +553,11 @@
               <td>Document frequency of the word</td>
             </tr>
             <tr>
+              <td>max_df = ${maxDf}</td>
+              <td>Corpus-noise cutoff (${thresholdPercentage.toFixed(0)}%)</td>
+              <td><code>TfidfVectorizer(max_df=${maxDf})</code></td>
+            </tr>
+            <tr>
               <td>TF-IDF = ${tfidf.toFixed(2)}</td>
               <td>Importance of the word in Document 1</td>
               <td>One value from <code>tfidf_matrix</code></td>
@@ -503,17 +566,17 @@
         </table>
 
         <p>
-          In Python, <code>TfidfVectorizer()</code> creates the TF-IDF matrix.
-          Then <code>cosine_similarity()</code> compares those word-score
-          patterns between documents. Documents that share important signal words
-          receive higher similarity scores.
+          In Python you would write:
+          <code>TfidfVectorizer(stop_words='english', max_df=${maxDf})</code>.
+          The <code>stop_words</code> list removes general noise, and
+          <code>max_df</code> removes corpus noise automatically.
         </p>
 
         <p>
-          <b>Important note:</b> scikit-learn may use smoothing and normalization
-          by default, so its exact number can be different from this classroom
-          simulation. However, the interpretation is the same:
-          specific words have greater importance than common words.
+          <b>Important note:</b> scikit-learn also applies smoothing and
+          normalization, so its exact numbers may differ from this classroom
+          simulation. The interpretation is the same: specific words are signal,
+          and over-common words are noise.
         </p>
       </div>`;
 
@@ -525,9 +588,7 @@
   }
 
   document.getElementById("wordInput").addEventListener("keydown", event => {
-    if (event.key === "Enter") {
-      analyze();
-    }
+    if (event.key === "Enter") analyze();
   });
 </script>
 </body>
