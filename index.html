@@ -262,6 +262,22 @@
       </ul>
     </div>
 
+    <div class="formula-card">
+      <h2>Similarity Metric (Cosine Similarity)</h2>
+
+      $$\text{sim}(d_1, d_2)
+      = \frac{\vec{d_1} \cdot \vec{d_2}}{\lVert \vec{d_1} \rVert \, \lVert \vec{d_2} \rVert}
+      = \frac{\sum_{i=1}^{n} w_{i,1}\, w_{i,2}}
+             {\sqrt{\sum_{i=1}^{n} w_{i,1}^2}\ \sqrt{\sum_{i=1}^{n} w_{i,2}^2}}$$
+
+      <ul class="legend">
+        <li>\(\vec{d_1}, \vec{d_2}\): TF-IDF vectors of two documents</li>
+        <li>\(w_{i,d}\): TF-IDF weight of term \(i\) in document \(d\)</li>
+        <li>\(\cos(\theta) \approx 1\): documents are highly similar (aligned)</li>
+        <li>\(\cos(\theta) \approx 0\): documents share almost no terms (orthogonal)</li>
+      </ul>
+    </div>
+
     <label for="docsInput">Your documents (one per line)</label>
 
     <textarea id="docsInput">The contract requires a signature from both parties.
@@ -281,6 +297,7 @@ The customer said the battery life was excellent.</textarea>
       <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05"
              value="0.85" title="Corpus noise threshold (max_df)" />
       <button onclick="analyze()">Analyze</button>
+      <button class="btn-secondary" onclick="compareSimilarity()">Compare similarity</button>
       <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
     </div>
 
@@ -467,10 +484,10 @@ The customer said the battery life was excellent.`;
 
         <p>Classification: <span class="${className}">${classification}</span></p>
 
-        <p>Frequency: <b>${nt} / ${N}</b> documents
+        <p>Corpus frequency: <b>${nt} / ${N}</b> documents
            (${documentPercentage.toFixed(0)}%)</p>
 
-        <p>Threshold (max_df)Maximum Document Frequency:
+        <p>Corpus-noise threshold (max_df):
            <b>${thresholdPercentage.toFixed(0)}%</b></p>
 
         <div class="meter-label">
@@ -518,7 +535,187 @@ The customer said the battery life was excellent.`;
         </p>
       </div>`;
 
-   
+    html += `
+      <div class="python-connection">
+        <h2>Connecting the Simulation to the Python Results</h2>
+
+        <p>
+          This website uses the same TF-IDF idea as scikit-learn. The
+          <code>max_df</code> threshold you set here matches the
+          <code>max_df</code> argument in Python.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Simulation value</th>
+              <th>Meaning here</th>
+              <th>Equivalent Python idea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>TF = ${tfDoc1}</td>
+              <td>Times "${safeWord}" appears in Document 1</td>
+              <td>Term frequency in the TF-IDF matrix</td>
+            </tr>
+            <tr>
+              <td>N = ${N}</td>
+              <td>Total number of documents</td>
+              <td><code>len(documents)</code></td>
+            </tr>
+            <tr>
+              <td>n_t = ${nt}</td>
+              <td>Documents containing "${safeWord}"</td>
+              <td>Document frequency of the word</td>
+            </tr>
+            <tr>
+              <td>max_df = ${maxDf}</td>
+              <td>Corpus-noise cutoff (${thresholdPercentage.toFixed(0)}%)</td>
+              <td><code>TfidfVectorizer(max_df=${maxDf})</code></td>
+            </tr>
+            <tr>
+              <td>TF-IDF = ${tfidf.toFixed(2)}</td>
+              <td>Importance of the word in Document 1</td>
+              <td>One value from <code>tfidf_matrix</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          In Python you would write:
+          <code>TfidfVectorizer(stop_words='english', max_df=${maxDf})</code>.
+          The <code>stop_words</code> list removes general noise, and
+          <code>max_df</code> removes corpus noise automatically.
+        </p>
+
+        <p>
+          <b>Important note:</b> scikit-learn also applies smoothing and
+          normalization, so its exact numbers may differ from this classroom
+          simulation. The interpretation is the same: specific words are signal,
+          and over-common words are noise.
+        </p>
+      </div>`;
+
+    output.innerHTML = html;
+
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise([output]);
+    }
+  }
+
+  // ---- Cosine Similarity feature (independent add-on) ----
+  function compareSimilarity() {
+    const output = document.getElementById("output");
+    const documents = getDocuments();
+
+    if (documents.length < 2) {
+      output.innerHTML =
+        "<p class='no'>Please provide at least two documents to compare similarity.</p>";
+      return;
+    }
+
+    // Tokenize every document (reuses cleanWordList)
+    const tokenized = documents.map(doc => cleanWordList(doc));
+
+    // Build the vocabulary
+    const vocab = Array.from(new Set(tokenized.flat()));
+    const N = documents.length;
+
+    // Document frequency for each term
+    const df = {};
+    vocab.forEach(term => {
+      df[term] = tokenized.filter(words => words.includes(term)).length;
+    });
+
+    // Build a TF-IDF vector for each document
+    const vectors = tokenized.map(words => {
+      return vocab.map(term => {
+        const tf = words.filter(w => w === term).length;
+        const idf = Math.log(N / df[term]);
+        return tf * idf;
+      });
+    });
+
+    // Cosine similarity between two vectors
+    function cosine(a, b) {
+      let dot = 0, magA = 0, magB = 0;
+      for (let i = 0; i < a.length; i++) {
+        dot += a[i] * b[i];
+        magA += a[i] * a[i];
+        magB += b[i] * b[i];
+      }
+      if (magA === 0 || magB === 0) return 0;
+      return dot / (Math.sqrt(magA) * Math.sqrt(magB));
+    }
+
+    // Compare Document 1 against all documents
+    const base = vectors[0];
+
+    let html = `
+      <div class="signal-card">
+        <h2>Document Similarity to Document 1</h2>
+        <p>
+          Each document is turned into a TF-IDF vector, then compared to
+          Document 1 using cosine similarity. A score near 1 means very similar;
+          a score near 0 means the documents share few important words.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Document</th>
+              <th>Text</th>
+              <th>Similarity to Doc 1</th>
+              <th>Meaning</th>
+            </tr>
+          </thead>
+          <tbody>`;
+
+    vectors.forEach((vec, i) => {
+      const score = cosine(base, vec);
+
+      let meaning;
+      if (i === 0) {
+        meaning = "Same document";
+      } else if (score >= 0.7) {
+        meaning = "Highly similar";
+      } else if (score >= 0.3) {
+        meaning = "Somewhat similar";
+      } else if (score > 0) {
+        meaning = "Weakly related";
+      } else {
+        meaning = "No shared signal words";
+      }
+
+      const pct = (score * 100).toFixed(0);
+
+      html += `
+        <tr>
+          <td>Doc ${i + 1}</td>
+          <td>${escapeHTML(documents[i])}</td>
+          <td><b>${score.toFixed(3)}</b></td>
+          <td>${meaning}</td>
+        </tr>
+        <tr>
+          <td colspan="4">
+            <div class="meter">
+              <div class="meter-fill signal-fill" style="width: ${pct}%"></div>
+            </div>
+          </td>
+        </tr>`;
+    });
+
+    html += `
+          </tbody>
+        </table>
+
+        <p style="margin-top:14px;">
+          <b>Sentence for class:</b> Cosine similarity measures the angle between
+          two document vectors. When two documents use the same important
+          (signal) words, their vectors point in nearly the same direction, so
+          the angle is small and the cosine is close to 1.
+        </p>
+      </div>`;
 
     output.innerHTML = html;
 
