@@ -6,85 +6,269 @@
 <title>Text Mining Word Analyzer</title>
 
 <script>
-  window.MathJax = { tex: { inlineMath: [['\\(','\\)']], displayMath: [['$$','$$']] } };
+  window.MathJax = {
+    tex: {
+      inlineMath: [['\\(', '\\)']],
+      displayMath: [['$$', '$$']]
+    }
+  };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
 <style>
   * { box-sizing: border-box; }
-  body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f9; color: #222; margin: 0; padding: 24px; line-height: 1.5; }
-  .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,0.08); }
-  h1 { margin-top: 0; font-size: 1.5rem; }
-  .formula-card { margin: 18px 0; padding: 18px 20px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; }
-  .formula-card h2 { margin: 0 0 6px; font-size: 1.05rem; color: #1e3a8a; }
-  .legend { font-size: 0.9rem; color: #334155; margin-top: 8px; }
+
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+    color: #222;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+
+  .container {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+  }
+
+  h1 { margin-top: 0; font-size: 1.7rem; }
+  h2 { font-size: 1.2rem; }
+
+  .formula-card {
+    margin: 18px 0;
+    padding: 18px 20px;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 10px;
+  }
+
+  .formula-card h2 {
+    margin: 0 0 6px;
+    font-size: 1.05rem;
+    color: #1e3a8a;
+  }
+
+  .legend {
+    font-size: 0.9rem;
+    color: #334155;
+    margin-top: 8px;
+  }
+
   .legend li { margin: 2px 0; }
-  label { display: block; font-weight: 600; margin: 16px 0 6px; }
-  textarea { width: 100%; min-height: 130px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; font-family: inherit; resize: vertical; }
-  .hint { font-size: 0.85rem; color: #64748b; margin-top: 4px; }
-  .controls { display: flex; gap: 10px; flex-wrap: wrap; margin: 18px 0; }
-  input[type="text"] { flex: 1; min-width: 200px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
-  button { padding: 10px 20px; border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 1rem; cursor: pointer; }
+
+  label {
+    display: block;
+    font-weight: 600;
+    margin: 16px 0 6px;
+  }
+
+  textarea {
+    width: 100%;
+    min-height: 130px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+
+  .hint {
+    font-size: 0.85rem;
+    color: #64748b;
+    margin-top: 4px;
+  }
+
+  .controls {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    margin: 18px 0;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 10px 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+  }
+
+  button {
+    padding: 10px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+
   button:hover { background: #1d4ed8; }
+
   .btn-secondary { background: #64748b; }
   .btn-secondary:hover { background: #475569; }
-  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: 0.92rem; }
-  th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; vertical-align: top; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.92rem;
+  }
+
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
   th { background: #f1f5f9; }
+
   .yes { color: #16a34a; font-weight: 600; }
-  .no  { color: #dc2626; font-weight: 600; }
-  .explanation { margin-top: 22px; padding: 16px 18px; background: #f8fafc; border-left: 4px solid #2563eb; border-radius: 6px; }
-  .explanation h2 { font-size: 1.1rem; margin-top: 0; }
-  .worked { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-top: 14px; overflow-x: auto; }
-  code { background: #eef2ff; padding: 1px 5px; border-radius: 4px; }
+  .no { color: #dc2626; font-weight: 600; }
+
+  .explanation,
+  .python-connection,
+  .signal-card {
+    margin-top: 22px;
+    padding: 16px 18px;
+    border-radius: 8px;
+  }
+
+  .explanation {
+    background: #f8fafc;
+    border-left: 4px solid #2563eb;
+  }
+
+  .signal-card {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+  }
+
+  .signal {
+    color: #15803d;
+    font-weight: 700;
+  }
+
+  .noise {
+    color: #dc2626;
+    font-weight: 700;
+  }
+
+  .neutral {
+    color: #a16207;
+    font-weight: 700;
+  }
+
+  .worked {
+    background: #ecfdf5;
+    border: 1px solid #a7f3d0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-top: 14px;
+    overflow-x: auto;
+  }
+
+  .python-connection {
+    background: #fff7ed;
+    border-left: 4px solid #ea580c;
+  }
+
+  .meter-label {
+    display: flex;
+    justify-content: space-between;
+    font-weight: 600;
+    margin-top: 10px;
+  }
+
+  .meter {
+    height: 18px;
+    background: #e2e8f0;
+    border-radius: 999px;
+    overflow: hidden;
+    margin: 5px 0 12px;
+  }
+
+  .meter-fill {
+    height: 100%;
+    border-radius: 999px;
+  }
+
+  .signal-fill { background: #22c55e; }
+  .noise-fill { background: #ef4444; }
+
+  code {
+    background: #eef2ff;
+    padding: 2px 5px;
+    border-radius: 4px;
+  }
+
   footer {
-  text-align: center;
-  margin-top: 24px;
-  padding-top: 16px;
-  font-size: 0.85rem;
-  color: #64748b;
-  border-top: 1px solid #e2e8f0;
-}
+    text-align: center;
+    margin-top: 24px;
+    padding-top: 16px;
+    font-size: 0.85rem;
+    color: #64748b;
+    border-top: 1px solid #e2e8f0;
+  }
 </style>
 </head>
+
 <body>
   <div class="container">
     <h1>Text Mining Word Analyzer</h1>
-    <p>TF-IDF compares one word against a <b>collection of documents</b>. Use the sample documents below or replace them with your own — one document per line.</p>
+
+    <p>
+      This simulation shows whether a selected word acts as a useful
+      <b>signal</b> or unhelpful <b>noise</b> in a collection of documents.
+    </p>
 
     <div class="formula-card">
       <h2>The TF-IDF Formula</h2>
-      $$ w_{t,d} = \text{TF}(t,d) \times \log\!\left(\frac{N}{n_t}\right) $$
+
+      $$w_{t,d} = \text{TF}(t,d) \times \log\left(\frac{N}{n_t}\right)$$
+
       <ul class="legend">
-        <li>\( w_{t,d} \) — TF-IDF weight of term \(t\) in document \(d\)</li>
-        <li>\( \text{TF}(t,d) \) — times term \(t\) appears in document \(d\)</li>
-        <li>\( N \) — total number of documents</li>
-        <li>\( n_t \) — number of documents that contain term \(t\)</li>
+        <li>\(w_{t,d}\): TF-IDF weight of term \(t\) in document \(d\)</li>
+        <li>\(\text{TF}(t,d)\): number of times term \(t\) appears in one document</li>
+        <li>\(N\): total number of documents</li>
+        <li>\(n_t\): number of documents containing term \(t\)</li>
       </ul>
     </div>
 
-    <!-- Editable corpus: the user can paste their own documents here -->
     <label for="docsInput">Your documents (one per line)</label>
+
     <textarea id="docsInput">Text mining is the process of extracting information from text.
 Natural language processing and text mining are related fields.
 Machine learning algorithms are used in data science and mining.
 Cooking recipes usually involve various ingredients and steps.
 Baking a cake requires flour, sugar, and a hot oven.
 Text mining involves extracting useful information.</textarea>
-    <div class="hint">Each line becomes one document. Add, edit, or delete lines to use your own text.</div>
+
+    <div class="hint">
+      Each line is treated as one document. You can replace these samples with your own sentences.
+    </div>
 
     <div class="controls">
-      <input type="text" id="wordInput" placeholder="Enter a word to analyze..." />
+      <input type="text" id="wordInput" placeholder="Enter a word, for example: mining" />
       <button onclick="analyze()">Analyze</button>
       <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
     </div>
 
     <div id="output"></div>
   </div>
-</script>
+
   <footer>
-  @2026timothymarkbal-e
-</footer>
+    @2026timothymarkbal-e
+  </footer>
+
 <script>
   const SAMPLE_DOCS =
 `Text mining is the process of extracting information from text.
@@ -94,8 +278,13 @@ Cooking recipes usually involve various ingredients and steps.
 Baking a cake requires flour, sugar, and a hot oven.
 Text mining involves extracting useful information.`;
 
+  const STOP_WORDS = [
+    "a", "an", "and", "are", "as", "at", "be", "by", "for",
+    "from", "in", "is", "it", "of", "on", "or", "the", "to",
+    "with", "was", "were", "this", "that"
+  ];
+
   function getDocuments() {
-    // Read the textarea, split by line, drop blank lines
     return document.getElementById("docsInput").value
       .split("\n")
       .map(s => s.trim())
@@ -104,6 +293,21 @@ Text mining involves extracting useful information.`;
 
   function resetDocs() {
     document.getElementById("docsInput").value = SAMPLE_DOCS;
+    document.getElementById("output").innerHTML = "";
+  }
+
+  function escapeHTML(text) {
+    const div = document.createElement("div");
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
+  function cleanWordList(text) {
+    return text
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, "")
+      .split(/\s+/)
+      .filter(word => word.length > 0);
   }
 
   function analyze() {
@@ -112,75 +316,228 @@ Text mining involves extracting useful information.`;
     const documents = getDocuments();
 
     if (!documents.length) {
-      output.innerHTML = "<p class='no'>Please add at least one document above.</p>";
+      output.innerHTML = "<p class='no'>Please add at least one document.</p>";
       return;
     }
+
     if (!word) {
-      output.innerHTML = "<p class='no'>Please enter a word.</p>";
+      output.innerHTML = "<p class='no'>Please enter a word to analyze.</p>";
       return;
     }
+
+    const safeWord = escapeHTML(word);
 
     const counts = documents.map((doc, i) => {
-      const cleanWords = doc.toLowerCase().replace(/[.,]/g, "").split(/\s+/);
-      const count = cleanWords.filter(w => w === word).length;
-      return { doc: `Doc ${i + 1}`, text: doc, count: count };
+      const words = cleanWordList(doc);
+      const count = words.filter(currentWord => currentWord === word).length;
+
+      return {
+        doc: `Doc ${i + 1}`,
+        text: doc,
+        count: count
+      };
     });
 
-    let html = `<h2>Word Analysis Table</h2>
+    const N = documents.length;
+    const nt = counts.filter(row => row.count > 0).length;
+    const tfDoc1 = counts[0].count;
+
+    let html = `
+      <h2>Word Analysis Table</h2>
       <table>
         <thead>
           <tr>
             <th>Document</th>
             <th>Text</th>
-            <th>Times '${word}' appears</th>
+            <th>Times "${safeWord}" appears</th>
             <th>Contains word?</th>
           </tr>
         </thead>
         <tbody>`;
+
     counts.forEach(row => {
-      html += `<tr>
-        <td>${row.doc}</td>
-        <td>${row.text}</td>
-        <td>${row.count}</td>
-        <td class="${row.count > 0 ? 'yes' : 'no'}">${row.count > 0 ? 'Yes' : 'No'}</td>
-      </tr>`;
+      html += `
+        <tr>
+          <td>${row.doc}</td>
+          <td>${escapeHTML(row.text)}</td>
+          <td>${row.count}</td>
+          <td class="${row.count > 0 ? "yes" : "no"}">
+            ${row.count > 0 ? "Yes" : "No"}
+          </td>
+        </tr>`;
     });
+
     html += `</tbody></table>`;
 
-    const N = documents.length;
-    const nt = counts.filter(r => r.count > 0).length;
-    const tfDoc1 = counts[0].count;
+    if (nt === 0) {
+      html += `
+        <div class="explanation">
+          <p class="no">
+            The word "<b>${safeWord}</b>" does not appear in the documents,
+            so there is no TF-IDF score to calculate.
+          </p>
+        </div>`;
 
-    if (nt > 0) {
-      const idf = Math.log(N / nt);
-      const tfidf = tfDoc1 * idf;
-      const common = nt > N / 2 ? "common" : "relatively specific";
-
-      html += `<div class="explanation">
-        <h2>Explanation</h2>
-        <p>The word '<b>${word}</b>' appears in <b>${nt}</b> out of <b>${N}</b> documents.</p>
-        <p>In Document 1, it appears <b>${tfDoc1}</b> time(s).</p>
-        <div class="worked">
-          $$ w_{\\text{${word}},\\,d_1}
-             = \\text{TF} \\times \\log\\!\\left(\\frac{N}{n_t}\\right)
-             = ${tfDoc1} \\times \\log\\!\\left(\\frac{${N}}{${nt}}\\right)
-             = ${tfDoc1} \\times ${idf.toFixed(2)}
-             = ${tfidf.toFixed(2)} $$
-        </div>
-        <p><b>The Word</b> '${word}' appears in ${nt} of the ${N} documents.
-        Because it is ${common}, its IDF score is ${idf.toFixed(2)}.
-        This tells us how useful the word is for describing Document 1.</p>
-      </div>`;
-    } else {
-      html += `<div class="explanation"><p class="no">The word '${word}' does not appear in any document.</p></div>`;
+      output.innerHTML = html;
+      return;
     }
 
+    const idf = Math.log(N / nt);
+    const tfidf = tfDoc1 * idf;
+
+    const documentPercentage = (nt / N) * 100;
+    const signalPercentage = Math.max(0, 100 - documentPercentage);
+    const isStopWord = STOP_WORDS.includes(word);
+
+    let classification = "";
+    let className = "";
+    let explanation = "";
+
+    if (isStopWord) {
+      classification = "NOISE";
+      className = "noise";
+      explanation = `The word "${safeWord}" is a common stop word. Words such as "the", "and", and "is" usually do not describe the topic of a document, so text-mining systems often remove them.`;
+    } else if (nt === N) {
+      classification = "NOISE";
+      className = "noise";
+      explanation = `The word "${safeWord}" appears in every document. It cannot distinguish one document from another, so it provides very little useful information.`;
+    } else if (nt > N / 2) {
+      classification = "WEAK SIGNAL / POSSIBLE NOISE";
+      className = "neutral";
+      explanation = `The word "${safeWord}" appears in many documents. It has some meaning, but it is not very specific because it does not strongly separate one topic from another.`;
+    } else {
+      classification = "SIGNAL";
+      className = "signal";
+      explanation = `The word "${safeWord}" appears in relatively few documents. This makes it more useful for identifying a topic or distinguishing a document from the others.`;
+    }
+
+    html += `
+      <div class="signal-card">
+        <h2>Signal and Noise Check</h2>
+
+        <p>
+          Classification:
+          <span class="${className}">${classification}</span>
+        </p>
+
+        <div class="meter-label">
+          <span>Noise: common across documents</span>
+          <span>${documentPercentage.toFixed(0)}%</span>
+        </div>
+
+        <div class="meter">
+          <div class="meter-fill noise-fill" style="width: ${documentPercentage}%"></div>
+        </div>
+
+        <div class="meter-label">
+          <span>Signal: more specific to fewer documents</span>
+          <span>${signalPercentage.toFixed(0)}%</span>
+        </div>
+
+        <div class="meter">
+          <div class="meter-fill signal-fill" style="width: ${signalPercentage}%"></div>
+        </div>
+
+        <p>${explanation}</p>
+      </div>`;
+
+    html += `
+      <div class="explanation">
+        <h2>TF-IDF Explanation</h2>
+
+        <p>
+          The word "<b>${safeWord}</b>" appears in
+          <b>${nt}</b> out of <b>${N}</b> documents.
+        </p>
+
+        <p>
+          In Document 1, it appears <b>${tfDoc1}</b> time(s).
+        </p>
+
+        <div class="worked">
+          $$w_{\\text{${safeWord}},d_1}
+          = \\text{TF} \\times \\log\\left(\\frac{N}{n_t}\\right)
+          = ${tfDoc1} \\times \\log\\left(\\frac{${N}}{${nt}}\\right)
+          = ${tfDoc1} \\times ${idf.toFixed(2)}
+          = ${tfidf.toFixed(2)}$$
+        </div>
+
+        <p>
+          <b>Sentence for class:</b>
+          The word "${safeWord}" appears in ${nt} of the ${N} documents.
+          Its IDF score is ${idf.toFixed(2)}. A higher IDF means the word is
+          more specific and is more likely to act as a useful signal.
+        </p>
+      </div>`;
+
+    html += `
+      <div class="python-connection">
+        <h2>Connecting the Simulation to the Python Results</h2>
+
+        <p>
+          This website performs the same basic TF-IDF idea as your Python code.
+          Both methods first count the word in each document, determine how many
+          documents contain it, and then calculate an importance score.
+        </p>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Simulation value</th>
+              <th>Meaning in this website</th>
+              <th>Equivalent Python idea</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>TF = ${tfDoc1}</td>
+              <td>Times "${safeWord}" appears in Document 1</td>
+              <td>Term frequency in the TF-IDF matrix</td>
+            </tr>
+            <tr>
+              <td>N = ${N}</td>
+              <td>Total number of documents</td>
+              <td><code>len(documents)</code></td>
+            </tr>
+            <tr>
+              <td>n_t = ${nt}</td>
+              <td>Documents containing "${safeWord}"</td>
+              <td>Document frequency of the word</td>
+            </tr>
+            <tr>
+              <td>TF-IDF = ${tfidf.toFixed(2)}</td>
+              <td>Importance of the word in Document 1</td>
+              <td>One value from <code>tfidf_matrix</code></td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p>
+          In Python, <code>TfidfVectorizer()</code> creates the TF-IDF matrix.
+          Then <code>cosine_similarity()</code> compares those word-score
+          patterns between documents. Documents that share important signal words
+          receive higher similarity scores.
+        </p>
+
+        <p>
+          <b>Important note:</b> scikit-learn may use smoothing and normalization
+          by default, so its exact number can be different from this classroom
+          simulation. However, the interpretation is the same:
+          specific words have greater importance than common words.
+        </p>
+      </div>`;
+
     output.innerHTML = html;
-    if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([output]);
+
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise([output]);
+    }
   }
 
-  document.getElementById("wordInput").addEventListener("keydown", e => {
-    if (e.key === "Enter") analyze();
+  document.getElementById("wordInput").addEventListener("keydown", event => {
+    if (event.key === "Enter") {
+      analyze();
+    }
   });
 </script>
 </body>
