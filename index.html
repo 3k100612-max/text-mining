@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Text Mining & TF-IDF Analyzer</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Segoe UI", Arial, sans-serif;
+    background: #f4f6f9;
+    color: #222;
+    margin: 0;
+    padding: 24px;
+    line-height: 1.5;
+  }
+  .container {
+    max-width: 950px;
+    margin: 0 auto;
+    background: #fff;
+    padding: 28px;
+    border-radius: 12px;
+    box-shadow: 0 4px 18px rgba(0,0,0,0.08);
+  }
+  h1 { margin-top: 0; font-size: 1.5rem; }
+  textarea {
+    width: 100%;
+    min-height: 90px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+  }
+  button {
+    margin-top: 12px;
+    padding: 10px 22px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: #fff;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 16px;
+    font-size: 0.92rem;
+  }
+  th, td {
+    border: 1px solid #e2e8f0;
+    padding: 8px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th { background: #f1f5f9; }
+  .high { background: #fef9c3; font-weight: 600; }
+  .zero { color: #94a3b8; }
+  .explanation {
+    margin-top: 22px;
+    padding: 16px 18px;
+    background: #f8fafc;
+    border-left: 4px solid #2563eb;
+    border-radius: 6px;
+  }
+  .explanation h2 { font-size: 1.1rem; margin-top: 0; }
+  code { background: #eef2ff; padding: 1px 5px; border-radius: 4px; }
+  small { color: #64748b; }
+</style>
+</head>
+<body>
+  <div class="container">
+    <h1>Text Mining & TF-IDF Analyzer</h1>
+    <p>Paste a sentence below. Each word is scored for how useful it is at describing your text, based on the sample documents.</p>
+
+    <textarea id="sentenceInput" placeholder="Paste or type a sentence here...">Text mining extracts useful information from language.</textarea>
+    <br>
+    <button onclick="analyze()">Analyze Sentence</button>
+
+    <div id="output"></div>
+  </div>
+
+<script>
+  // Sample reference documents (the "corpus")
+  const documents = [
+    "Text mining is the process of extracting information from text.",
+    "Natural language processing and text mining are related fields.",
+    "Machine learning algorithms are used in data science and mining.",
+    "Cooking recipes usually involve various ingredients and steps.",
+    "Baking a cake requires flour, sugar, and a hot oven.",
+    "Text mining involves extracting useful information."
+  ];
+
+  // Turn a string into an array of clean lowercase words
+  function tokenize(text) {
+    return text.toLowerCase().replace(/[^a-z0-9\s]/g, "").split(/\s+/).filter(Boolean);
+  }
+
+  function analyze() {
+    const sentence = document.getElementById("sentenceInput").value.trim();
+    const output = document.getElementById("output");
+
+    if (!sentence) {
+      output.innerHTML = "<p class='zero'>Please paste a sentence first.</p>";
+      return;
+    }
+
+    const N = documents.length;
+
+    // Pre-tokenize the corpus once
+    const docTokens = documents.map(d => tokenize(d));
+
+    // Unique words from the pasted sentence, keeping order of first appearance
+    const sentenceWords = tokenize(sentence);
+    const uniqueWords = [...new Set(sentenceWords)];
+
+    // Build results per word
+    const results = uniqueWords.map(word => {
+      const tf = sentenceWords.filter(w => w === word).length;          // count in the sentence
+      const nt = docTokens.filter(tokens => tokens.includes(word)).length; // docs containing word
+      const idf = nt > 0 ? Math.log(N / nt) : 0;
+      const tfidf = tf * idf;
+      return { word, tf, nt, idf, tfidf };
+    });
+
+    // Sort a copy by TF-IDF to find the most distinctive words
+    const ranked = [...results].sort((a, b) => b.tfidf - a.tfidf);
+    const maxTfidf = ranked.length ? ranked[0].tfidf : 0;
+
+    // Build the table
+    let html = `<h2>TF-IDF for Your Sentence</h2>
+      <small>Corpus size N = ${N} documents. IDF = log(N / docs-containing-word).</small>
+      <table>
+        <thead>
+          <tr>
+            <th>Word</th>
+            <th>Count in sentence (TF)</th>
+            <th>Docs containing it (n<sub>t</sub>)</th>
+            <th>IDF</th>
+            <th>TF-IDF</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    results.forEach(r => {
+      const highlight = (r.tfidf === maxTfidf && maxTfidf > 0) ? "high" : "";
+      html += `<tr class="${highlight}">
+        <td>${r.word}</td>
+        <td>${r.tf}</td>
+        <td class="${r.nt === 0 ? 'zero' : ''}">${r.nt}</td>
+        <td>${r.idf.toFixed(2)}</td>
+        <td>${r.tfidf.toFixed(2)}</td>
+      </tr>`;
+    });
+    html += `</tbody></table>`;
+
+    // Plain-English explanation
+    const top = ranked.filter(r => r.tfidf > 0).slice(0, 3).map(r => `'${r.word}'`);
+    html += `<div class="explanation">
+      <h2>Explanation</h2>
+      <p>Your sentence has <b>${uniqueWords.length}</b> unique word(s), checked against <b>${N}</b> documents.</p>
+      <p>A <b>high TF-IDF</b> means a word is used in your sentence but is <b>rare</b> across the documents, so it is good at describing your specific text.</p>
+      <p>A word with <b>IDF = 0</b> appears in every document (very common), so it carries little descriptive value.</p>
+      ${top.length
+        ? `<p>Most distinctive words here: <b>${top.join(", ")}</b> (highlighted row = highest score).</p>`
+        : `<p>None of your words appear in the sample documents, so all TF-IDF scores are 0.</p>`}
+    </div>`;
+
+    output.innerHTML = html;
+  }
+
+  // Analyze automatically on first load
+  analyze();
+</script>
+</body>
+</html>
