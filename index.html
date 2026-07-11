@@ -518,69 +518,7 @@ The customer said the battery life was excellent.`;
         </p>
       </div>`;
 
-    html += `
-      <div class="python-connection">
-        <h2>Connecting the Simulation to the Python Results</h2>
-
-        <p>
-          This website uses the same TF-IDF idea as scikit-learn. The
-          <code>max_df</code> threshold you set here matches the
-          <code>max_df</code> argument in Python.
-        </p>
-
-        <table>
-          <thead>
-            <tr>
-              <th>Simulation value</th>
-              <th>Meaning here</th>
-              <th>Equivalent Python idea</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>TF = ${tfDoc1}</td>
-              <td>Times "${safeWord}" appears in Document 1</td>
-              <td>Term frequency in the TF-IDF matrix</td>
-            </tr>
-            <tr>
-              <td>N = ${N}</td>
-              <td>Total number of documents</td>
-              <td><code>len(documents)</code></td>
-            </tr>
-            <tr>
-              <td>n_t = ${nt}</td>
-              <td>Documents containing "${safeWord}"</td>
-              <td>Document frequency of the word</td>
-            </tr>
-            <tr>
-              <td>max_df = ${maxDf}</td>
-              <td>Corpus-noise cutoff (${thresholdPercentage.toFixed(0)}%)</td>
-              <td><code>TfidfVectorizer(max_df=${maxDf})</code></td>
-            </tr>
-            <tr>
-              <td>TF-IDF = ${tfidf.toFixed(2)}</td>
-              <td>Importance of the word in Document 1</td>
-              <td>One value from <code>tfidf_matrix</code></td>
-            </tr>
-          </tbody>
-        </table>
-
-        <p>
-          In Python you would write:
-          <code>TfidfVectorizer(stop_words='english', max_df=${maxDf})</code>.
-          The <code>stop_words</code> list removes general noise, and
-          <code>max_df</code> removes corpus noise automatically.
-        </p>
-
-        <p>
-          <b>Important note:</b> scikit-learn also applies smoothing and
-          normalization, so its exact numbers may differ from this classroom
-          simulation. The interpretation is the same: specific words are signal,
-          and over-common words are noise.
-        </p>
-      </div>`;
-
-    output.innerHTML = html;
+   
 
     if (window.MathJax && MathJax.typesetPromise) {
       MathJax.typesetPromise([output]);
