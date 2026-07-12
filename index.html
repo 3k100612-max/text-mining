@@ -4,667 +4,172 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Text Mining Word Analyzer</title>
-
 <script>
   window.MathJax = {
-    tex: {
-      inlineMath: [['\\(', '\\)']],
-      displayMath: [['$$', '$$']]
-    }
+    tex: { inlineMath: [['\\(', '\\)']], displayMath: [['$$', '$$']] }
   };
 </script>
 <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 <style>
   * { box-sizing: border-box; }
-
-  body {
-    font-family: "Segoe UI", Arial, sans-serif;
-    background: #f4f6f9;
-    color: #222;
-    margin: 0;
-    padding: 24px;
-    line-height: 1.5;
-  }
-
-  .container {
-    max-width: 900px;
-    margin: 0 auto;
-    background: #fff;
-    padding: 28px;
-    border-radius: 12px;
-    box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
-  }
-
+  body { font-family: "Segoe UI", Arial, sans-serif; background: #f4f6f9; color: #222; margin: 0; padding: 24px; line-height: 1.5; }
+  .container { max-width: 1280px; margin: 0 auto; background: #fff; padding: 28px; border-radius: 12px; box-shadow: 0 4px 18px rgba(0,0,0,.08); }
   h1 { margin-top: 0; font-size: 1.7rem; }
   h2 { font-size: 1.2rem; }
-
-  .formula-card {
-    margin: 18px 0;
-    padding: 18px 20px;
-    background: #eff6ff;
-    border: 1px solid #bfdbfe;
-    border-radius: 10px;
-  }
-
-  .formula-card h2 {
-    margin: 0 0 6px;
-    font-size: 1.05rem;
-    color: #1e3a8a;
-  }
-
-  .legend {
-    font-size: 0.9rem;
-    color: #334155;
-    margin-top: 8px;
-  }
-
+  .app-layout { display: grid; grid-template-columns: minmax(300px, 1fr) minmax(320px, 1.1fr); gap: 28px; align-items: start; margin-top: 22px; }
+  .explainer-panel, .analyzer-panel { min-width: 0; }
+  .explainer-panel { position: sticky; top: 20px; }
+  .analyzer-panel { padding: 20px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; }
+  .formula-card { margin: 0 0 18px; padding: 18px 20px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 10px; }
+  .formula-card h2 { margin: 0 0 6px; font-size: 1.05rem; color: #1e3a8a; }
+  .legend { font-size: .9rem; color: #334155; margin-top: 8px; }
   .legend li { margin: 2px 0; }
-
-  label {
-    display: block;
-    font-weight: 600;
-    margin: 16px 0 6px;
-  }
-
-  textarea {
-    width: 100%;
-    min-height: 150px;
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    font-family: inherit;
-    resize: vertical;
-  }
-
-  .hint {
-    font-size: 0.85rem;
-    color: #64748b;
-    margin-top: 4px;
-  }
-
-  .controls {
-    display: flex;
-    gap: 10px;
-    flex-wrap: wrap;
-    align-items: center;
-    margin: 18px 0;
-  }
-
-  input[type="text"] {
-    flex: 1;
-    min-width: 200px;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-  }
-
-  input[type="number"] {
-    width: 100px;
-    padding: 10px 12px;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    font-size: 1rem;
-  }
-
-  button {
-    padding: 10px 20px;
-    border: none;
-    border-radius: 8px;
-    background: #2563eb;
-    color: #fff;
-    font-size: 1rem;
-    cursor: pointer;
-  }
-
+  label { display: block; font-weight: 600; margin: 16px 0 6px; }
+  textarea { width: 100%; min-height: 260px; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: .95rem; font-family: inherit; resize: vertical; }
+  .hint { font-size: .85rem; color: #64748b; margin-top: 4px; }
+  .controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin: 18px 0; }
+  input[type="text"] { flex: 1 1 200px; min-width: 200px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+  input[type="number"] { width: 100px; padding: 10px 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; }
+  button { padding: 10px 20px; border: none; border-radius: 8px; background: #2563eb; color: #fff; font-size: 1rem; cursor: pointer; }
   button:hover { background: #1d4ed8; }
-
   .btn-secondary { background: #64748b; }
   .btn-secondary:hover { background: #475569; }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 16px;
-    font-size: 0.92rem;
-  }
-
-  th, td {
-    border: 1px solid #e2e8f0;
-    padding: 8px 10px;
-    text-align: left;
-    vertical-align: top;
-  }
-
+  table { width: 100%; border-collapse: collapse; margin-top: 16px; font-size: .92rem; }
+  th, td { border: 1px solid #e2e8f0; padding: 8px 10px; text-align: left; vertical-align: top; }
   th { background: #f1f5f9; }
-
   .yes { color: #16a34a; font-weight: 600; }
   .no { color: #dc2626; font-weight: 600; }
-
-  .explanation,
-  .python-connection,
-  .signal-card {
-    margin-top: 22px;
-    padding: 16px 18px;
-    border-radius: 8px;
-  }
-
-  .explanation {
-    background: #f8fafc;
-    border-left: 4px solid #2563eb;
-  }
-
-  .signal-card {
-    background: #f8fafc;
-    border: 1px solid #cbd5e1;
-  }
-
+  .explanation, .signal-card { margin-top: 22px; padding: 16px 18px; border-radius: 8px; }
+  .explanation { background: #fff; border-left: 4px solid #2563eb; }
+  .signal-card { background: #fff; border: 1px solid #cbd5e1; }
   .signal { color: #15803d; font-weight: 700; }
   .noise { color: #dc2626; font-weight: 700; }
   .neutral { color: #a16207; font-weight: 700; }
-
-  .worked {
-    background: #ecfdf5;
-    border: 1px solid #a7f3d0;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-top: 14px;
-    overflow-x: auto;
-  }
-
-  .python-connection {
-    background: #fff7ed;
-    border-left: 4px solid #ea580c;
-  }
-
-  .meter-label {
-    display: flex;
-    justify-content: space-between;
-    font-weight: 600;
-    margin-top: 10px;
-  }
-
-  .meter {
-    height: 18px;
-    background: #e2e8f0;
-    border-radius: 999px;
-    overflow: hidden;
-    margin: 5px 0 12px;
-  }
-
-  .meter-fill {
-    height: 100%;
-    border-radius: 999px;
-  }
-
+  .worked { background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 8px; padding: 12px 16px; margin-top: 14px; overflow-x: auto; }
+  .meter-label { display: flex; justify-content: space-between; gap: 12px; font-weight: 600; margin-top: 10px; }
+  .meter { height: 18px; background: #e2e8f0; border-radius: 999px; overflow: hidden; margin: 5px 0 12px; }
+  .meter-fill { height: 100%; border-radius: 999px; }
   .signal-fill { background: #22c55e; }
   .noise-fill { background: #ef4444; }
-
-  code {
-    background: #eef2ff;
-    padding: 2px 5px;
-    border-radius: 4px;
+  code { background: #eef2ff; padding: 2px 5px; border-radius: 4px; }
+  footer { text-align: center; margin-top: 24px; padding-top: 16px; font-size: .85rem; color: #64748b; border-top: 1px solid #e2e8f0; }
+  @media (max-width: 900px) {
+    body { padding: 16px; }
+    .container { padding: 20px; }
+    .app-layout { grid-template-columns: 1fr; gap: 20px; }
+    .explainer-panel { position: static; }
   }
-
-  footer {
-    text-align: center;
-    margin-top: 24px;
-    padding-top: 16px;
-    font-size: 0.85rem;
-    color: #64748b;
-    border-top: 1px solid #e2e8f0;
+  @media (max-width: 600px) {
+    body { padding: 10px; }
+    .container { padding: 16px; border-radius: 8px; }
+    h1 { font-size: 1.4rem; }
+    h2 { font-size: 1.1rem; }
+    .formula-card, .analyzer-panel { padding: 14px; }
+    .controls { flex-direction: column; align-items: stretch; }
+    input[type="text"], input[type="number"], button { width: 100%; min-width: 0; }
+    textarea { min-height: 220px; font-size: 16px; }
+    table { font-size: .82rem; }
+    th, td { padding: 6px; }
+    .meter-label { font-size: .82rem; }
   }
 </style>
 </head>
-
 <body>
-  <div class="container">
-    <h1>Text Mining Word Analyzer</h1>
-
-    <p>
-      This simulation shows whether a selected word acts as a useful
-      <b>signal</b> or unhelpful <b>noise</b> in a collection of documents.
-    </p>
-
-    <div class="formula-card">
-      <h2>The TF-IDF Formula</h2>
-
-      $$w_{t,d} = \text{TF}(t,d) \times \log\left(\frac{N}{n_t}\right)$$
-
-      <ul class="legend">
-        <li>\(w_{t,d}\): TF-IDF weight of term \(t\) in document \(d\)</li>
-        <li>\(\text{TF}(t,d)\): number of times term \(t\) appears in one document</li>
-        <li>\(N\): total number of documents</li>
-        <li>\(n_t\): number of documents containing term \(t\)</li>
-      </ul>
-    </div>
-
-    <div class="formula-card">
-      <h2>How the Analyzer Removes Noise</h2>
-      <ul class="legend">
-        <li>
-          <b>General stop words:</b> common English words such as
-          <code>the</code>, <code>a</code>, and <code>is</code>. These appear
-          everywhere and rarely describe a topic.
-        </li>
-        <li>
-          <b>Corpus stop words:</b> words that occur in almost every document in
-          this particular dataset. For example, <code>contract</code> is a real
-          English word, but in 1,000 legal contracts it appears in nearly 100%
-          of them, so it becomes noise for that dataset.
-        </li>
-        <li>
-          <b>Threshold (max_df):</b> when set to <code>0.85</code>, any word
-          appearing in more than 85% of documents is classified as corpus noise.
-        </li>
-      </ul>
-    </div>
-
-    <div class="formula-card">
-      <h2>Similarity Metric (Cosine Similarity)</h2>
-
-      $$\text{sim}(d_1, d_2)
-      = \frac{\vec{d_1} \cdot \vec{d_2}}{\lVert \vec{d_1} \rVert \, \lVert \vec{d_2} \rVert}
-      = \frac{\sum_{i=1}^{n} w_{i,1}\, w_{i,2}}
-             {\sqrt{\sum_{i=1}^{n} w_{i,1}^2}\ \sqrt{\sum_{i=1}^{n} w_{i,2}^2}}$$
-
-      <ul class="legend">
-        <li>\(\vec{d_1}, \vec{d_2}\): TF-IDF vectors of two documents</li>
-        <li>\(w_{i,d}\): TF-IDF weight of term \(i\) in document \(d\)</li>
-        <li>\(\cos(\theta) \approx 1\): documents are highly similar (aligned)</li>
-        <li>\(\cos(\theta) \approx 0\): documents share almost no terms (orthogonal)</li>
-      </ul>
-    </div>
-
-    <label for="docsInput">Your documents (one per line)</label>
-
-    <textarea id="docsInput">The contract requires a signature from both parties.
+<div class="container">
+  <h1>Text Mining Word Analyzer</h1>
+  <p>This simulation shows whether a selected word acts as a useful <b>signal</b> or unhelpful <b>noise</b> in a collection of documents.</p>
+  <div class="app-layout">
+    <section class="explainer-panel">
+      <div class="formula-card">
+        <h2>The TF-IDF Formula</h2>
+        $$w_{t,d} = \text{TF}(t,d) \times \log\left(\frac{N}{n_t}\right)$$
+        <ul class="legend"><li>\(w_{t,d}\): TF-IDF weight of term \(t\) in document \(d\)</li><li>\(\text{TF}(t,d)\): occurrences of term \(t\) in one document</li><li>\(N\): total number of documents</li><li>\(n_t\): number of documents containing term \(t\)</li></ul>
+      </div>
+      <div class="formula-card">
+        <h2>How the Analyzer Removes Noise</h2>
+        <ul class="legend"><li><b>General stop words:</b> common words such as <code>the</code>, <code>a</code>, and <code>is</code>.</li><li><b>Corpus stop words:</b> words that occur in many documents in this particular collection and do not distinguish documents.</li><li><b>Threshold (max_df):</b> words occurring above the selected percentage are classified as corpus noise.</li></ul>
+      </div>
+      <div class="formula-card">
+        <h2>Cosine Similarity</h2>
+        $$\text{sim}(d_1,d_2)=\frac{\vec{d_1}\cdot\vec{d_2}}{\lVert\vec{d_1}\rVert\,\lVert\vec{d_2}\rVert}$$
+        <ul class="legend"><li>\(\cos(\theta) \approx 1\): documents are highly similar.</li><li>\(\cos(\theta) \approx 0\): documents have few shared important words.</li></ul>
+      </div>
+    </section>
+    <section class="analyzer-panel">
+      <h2>Analyze Your Documents</h2>
+      <label for="docsInput">Your documents (one per line)</label>
+      <textarea id="docsInput">The contract requires a signature from both parties.
 The contract explains the payment rules and legal duties.
 The contract includes a clause about confidentiality.
 The contract states the delivery date for the goods.
 The customer requested a refund for a damaged product.
 The customer said the battery life was excellent.</textarea>
-
-    <div class="hint">
-      Each line is treated as one document. Try the word <code>contract</code>
-      (corpus noise) versus <code>customer</code> or <code>battery</code> (signal).
-    </div>
-
-    <div class="controls">
-      <input type="text" id="wordInput" placeholder="Enter a word, for example: contract" />
-      <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05"
-             value="0.85" title="Corpus noise threshold (max_df)" />
-      <button onclick="analyze()">Analyze</button>
-      <button class="btn-secondary" onclick="compareSimilarity()">Compare similarity</button>
-      <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
-    </div>
-
-    <div class="hint">
-      Corpus-noise threshold (max_df): a word found in more than this fraction
-      of documents is treated as corpus noise. Default 0.85 = 85%.
-    </div>
-
-    <div id="output"></div>
+      <div class="hint">Each line is treated as one document. Try <code>contract</code> for corpus noise, or <code>customer</code> and <code>battery</code> for more specific signals.</div>
+      <label for="wordInput">Word to analyze</label>
+      <div class="controls">
+        <input type="text" id="wordInput" placeholder="For example: contract">
+        <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05" value="0.60" title="Corpus noise threshold">
+        <button onclick="analyze()">Analyze</button>
+        <button class="btn-secondary" onclick="compareSimilarity()">Compare similarity</button>
+        <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
+      </div>
+      <div class="hint">Corpus-noise threshold: <code>0.60</code> means words found in more than 60% of documents are treated as corpus noise.</div>
+      <div id="output"></div>
+    </section>
   </div>
-
-  <footer>
-    @2026timothymarkbal-e
-  </footer>
-
+</div>
+<footer>@2026timothymarkbal-e</footer>
 <script>
-  const SAMPLE_DOCS =
-`The contract requires a signature from both parties.
+const SAMPLE_DOCS = `The contract requires a signature from both parties.
 The contract explains the payment rules and legal duties.
 The contract includes a clause about confidentiality.
 The contract states the delivery date for the goods.
 The customer requested a refund for a damaged product.
 The customer said the battery life was excellent.`;
-
-  // General English stop words (always noise)
-  const STOP_WORDS = [
-    "a", "an", "and", "are", "as", "at", "be", "both", "by", "for",
-    "from", "had", "has", "have", "he", "her", "his", "in", "is", "it",
-    "its", "of", "on", "or", "our", "she", "so", "the", "their", "them",
-    "they", "this", "that", "to", "was", "were", "will", "with", "you"
-  ];
-
-  function getDocuments() {
-    return document.getElementById("docsInput").value
-      .split("\n")
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-  }
-
-  function resetDocs() {
-    document.getElementById("docsInput").value = SAMPLE_DOCS;
-    document.getElementById("thresholdInput").value = "0.60";
-    document.getElementById("output").innerHTML = "";
-  }
-
-  function escapeHTML(text) {
-    const div = document.createElement("div");
-    div.textContent = text;
-    return div.innerHTML;
-  }
-
-  function cleanWordList(text) {
-    return text
-      .toLowerCase()
-      .replace(/[^a-z0-9\s-]/g, "")
-      .split(/\s+/)
-      .filter(word => word.length > 0);
-  }
-
-  function analyze() {
-    const word = document.getElementById("wordInput").value.trim().toLowerCase();
-    const output = document.getElementById("output");
-    const documents = getDocuments();
-
-    const maxDf = Number(document.getElementById("thresholdInput").value);
-
-    if (!documents.length) {
-      output.innerHTML = "<p class='no'>Please add at least one document.</p>";
-      return;
-    }
-
-    if (!word) {
-      output.innerHTML = "<p class='no'>Please enter a word to analyze.</p>";
-      return;
-    }
-
-    if (Number.isNaN(maxDf) || maxDf <= 0 || maxDf > 1) {
-      output.innerHTML =
-        "<p class='no'>Please enter a threshold between 0.1 and 1 (for example 0.85 = 85%).</p>";
-      return;
-    }
-
-    const safeWord = escapeHTML(word);
-
-    const counts = documents.map((doc, i) => {
-      const words = cleanWordList(doc);
-      const count = words.filter(currentWord => currentWord === word).length;
-      return { doc: `Doc ${i + 1}`, text: doc, count: count };
-    });
-
-    const N = documents.length;
-    const nt = counts.filter(row => row.count > 0).length;
-    const tfDoc1 = counts[0].count;
-
-    let html = `
-      <h2>Word Analysis Table</h2>
-      <table>
-        <thead>
-          <tr>
-            <th>Document</th>
-            <th>Text</th>
-            <th>Times "${safeWord}" appears</th>
-            <th>Contains word?</th>
-          </tr>
-        </thead>
-        <tbody>`;
-
-    counts.forEach(row => {
-      html += `
-        <tr>
-          <td>${row.doc}</td>
-          <td>${escapeHTML(row.text)}</td>
-          <td>${row.count}</td>
-          <td class="${row.count > 0 ? "yes" : "no"}">
-            ${row.count > 0 ? "Yes" : "No"}
-          </td>
-        </tr>`;
-    });
-
-    html += `</tbody></table>`;
-
-    if (nt === 0) {
-      html += `
-        <div class="explanation">
-          <p class="no">
-            The word "<b>${safeWord}</b>" does not appear in the documents,
-            so there is no TF-IDF score to calculate.
-          </p>
-        </div>`;
-      output.innerHTML = html;
-      return;
-    }
-
-    const idf = Math.log(N / nt);
-    const tfidf = tfDoc1 * idf;
-
-    const documentPercentage = (nt / N) * 100;
-    const signalPercentage = Math.max(0, 100 - documentPercentage);
-    const thresholdPercentage = maxDf * 100;
-    const isStopWord = STOP_WORDS.includes(word);
-
-    let classification = "";
-    let className = "";
-    let explanation = "";
-
-    if (isStopWord) {
-      classification = "GENERAL STOP WORD: NOISE";
-      className = "noise";
-      explanation =
-        `The word "${safeWord}" is a general English stop word. Words such as ` +
-        `"the", "a", and "is" appear frequently but do not describe the topic, ` +
-        `so text-mining tools remove them using a standard stop-word list.`;
-
-    } else if ((nt / N) > maxDf) {
-      classification = "CORPUS STOP WORD: NOISE";
-      className = "noise";
-      explanation =
-        `The word "${safeWord}" appears in ${nt} of ${N} documents ` +
-        `(${documentPercentage.toFixed(0)}%), which is above the ` +
-        `${thresholdPercentage.toFixed(0)}% threshold (max_df = ${maxDf}). ` +
-        `It may be a real keyword, but it is too common in THIS dataset to ` +
-        `tell documents apart, so it is treated as corpus noise.`;
-
-    } else if ((nt / N) > 0.50) {
-      classification = "WEAK SIGNAL / POSSIBLE NOISE";
-      className = "neutral";
-      explanation =
-        `The word "${safeWord}" appears in ${documentPercentage.toFixed(0)}% of ` +
-        `the documents. It carries some meaning, but it is shared by many ` +
-        `documents, so it is only a weak signal.`;
-
-    } else {
-      classification = "SIGNAL";
-      className = "signal";
-      explanation =
-        `The word "${safeWord}" appears in only ${nt} of ${N} documents ` +
-        `(${documentPercentage.toFixed(0)}%). It is specific, so it is a useful ` +
-        `signal for identifying the topic of a document.`;
-    }
-
-    html += `
-      <div class="signal-card">
-        <h2>Signal and Noise Check</h2>
-
-        <p>Classification: <span class="${className}">${classification}</span></p>
-
-        <p>Corpus frequency: <b>${nt} / ${N}</b> documents
-           (${documentPercentage.toFixed(0)}%)</p>
-
-        <p>Corpus-noise threshold (max_df):
-           <b>${thresholdPercentage.toFixed(0)}%</b></p>
-
-        <div class="meter-label">
-          <span>Noise: common across documents</span>
-          <span>${documentPercentage.toFixed(0)}%</span>
-        </div>
-        <div class="meter">
-          <div class="meter-fill noise-fill" style="width: ${documentPercentage}%"></div>
-        </div>
-
-        <div class="meter-label">
-          <span>Signal: more specific to fewer documents</span>
-          <span>${signalPercentage.toFixed(0)}%</span>
-        </div>
-        <div class="meter">
-          <div class="meter-fill signal-fill" style="width: ${signalPercentage}%"></div>
-        </div>
-
-        <p>${explanation}</p>
-      </div>`;
-
-    html += `
-      <div class="explanation">
-        <h2>TF-IDF Explanation</h2>
-
-        <p>The word "<b>${safeWord}</b>" appears in
-           <b>${nt}</b> out of <b>${N}</b> documents.</p>
-
-        <p>In Document 1, it appears <b>${tfDoc1}</b> time(s).</p>
-
-        <div class="worked">
-          $$w_{\\text{${safeWord}},d_1}
-          = \\text{TF} \\times \\log\\left(\\frac{N}{n_t}\\right)
-          = ${tfDoc1} \\times \\log\\left(\\frac{${N}}{${nt}}\\right)
-          = ${tfDoc1} \\times ${idf.toFixed(2)}
-          = ${tfidf.toFixed(2)}$$
-        </div>
-
-        <p>
-          <b>Sentence for class:</b>
-          The word "${safeWord}" appears in ${nt} of the ${N} documents.
-          Its IDF score is ${idf.toFixed(2)}. A higher IDF means the word is
-          rarer and therefore a stronger signal. A very low IDF means the word
-          is common and closer to noise.
-        </p>
-      </div>`;
-
-    output.innerHTML = html;
-
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise([output]);
-    }
-  }
-
-  // ---- Cosine Similarity feature (independent add-on) ----
-  function compareSimilarity() {
-    const output = document.getElementById("output");
-    const documents = getDocuments();
-
-    if (documents.length < 2) {
-      output.innerHTML =
-        "<p class='no'>Please provide at least two documents to compare similarity.</p>";
-      return;
-    }
-
-    // Tokenize every document (reuses cleanWordList)
-    const tokenized = documents.map(doc => cleanWordList(doc));
-
-    // Build the vocabulary
-    const vocab = Array.from(new Set(tokenized.flat()));
-    const N = documents.length;
-
-    // Document frequency for each term
-    const df = {};
-    vocab.forEach(term => {
-      df[term] = tokenized.filter(words => words.includes(term)).length;
-    });
-
-    // Build a TF-IDF vector for each document
-    const vectors = tokenized.map(words => {
-      return vocab.map(term => {
-        const tf = words.filter(w => w === term).length;
-        const idf = Math.log(N / df[term]);
-        return tf * idf;
-      });
-    });
-
-    // Cosine similarity between two vectors
-    function cosine(a, b) {
-      let dot = 0, magA = 0, magB = 0;
-      for (let i = 0; i < a.length; i++) {
-        dot += a[i] * b[i];
-        magA += a[i] * a[i];
-        magB += b[i] * b[i];
-      }
-      if (magA === 0 || magB === 0) return 0;
-      return dot / (Math.sqrt(magA) * Math.sqrt(magB));
-    }
-
-    // Compare Document 1 against all documents
-    const base = vectors[0];
-
-    let html = `
-      <div class="signal-card">
-        <h2>Document Similarity to Document 1</h2>
-        <p>
-          Each document is turned into a TF-IDF vector, then compared to
-          Document 1 using cosine similarity. A score near 1 means very similar;
-          a score near 0 means the documents share few important words.
-        </p>
-        <table>
-          <thead>
-            <tr>
-              <th>Document</th>
-              <th>Text</th>
-              <th>Similarity to Doc 1</th>
-              <th>Meaning</th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-    vectors.forEach((vec, i) => {
-      const score = cosine(base, vec);
-
-      let meaning;
-      if (i === 0) {
-        meaning = "Same document";
-      } else if (score >= 0.7) {
-        meaning = "Highly similar";
-      } else if (score >= 0.3) {
-        meaning = "Somewhat similar";
-      } else if (score > 0) {
-        meaning = "Weakly related";
-      } else {
-        meaning = "No shared signal words";
-      }
-
-      const pct = (score * 100).toFixed(0);
-
-      html += `
-        <tr>
-          <td>Doc ${i + 1}</td>
-          <td>${escapeHTML(documents[i])}</td>
-          <td><b>${score.toFixed(3)}</b></td>
-          <td>${meaning}</td>
-        </tr>
-        <tr>
-          <td colspan="4">
-            <div class="meter">
-              <div class="meter-fill signal-fill" style="width: ${pct}%"></div>
-            </div>
-          </td>
-        </tr>`;
-    });
-
-    html += `
-          </tbody>
-        </table>
-
-        <p style="margin-top:14px;">
-          <b>Sentence for class:</b> Cosine similarity measures the angle between
-          two document vectors. When two documents use the same important
-          (signal) words, their vectors point in nearly the same direction, so
-          the angle is small and the cosine is close to 1.
-        </p>
-      </div>`;
-
-    output.innerHTML = html;
-
-    if (window.MathJax && MathJax.typesetPromise) {
-      MathJax.typesetPromise([output]);
-    }
-  }
-
-  document.getElementById("wordInput").addEventListener("keydown", event => {
-    if (event.key === "Enter") analyze();
-  });
+const STOP_WORDS = ["a","an","and","are","as","at","be","both","by","for","from","had","has","have","he","her","his","in","is","it","its","of","on","or","our","she","so","the","their","them","they","this","that","to","was","were","will","with","you"];
+function getDocuments() { return document.getElementById("docsInput").value.split("\n").map(s => s.trim()).filter(s => s.length > 0); }
+function resetDocs() { document.getElementById("docsInput").value = SAMPLE_DOCS; document.getElementById("thresholdInput").value = "0.60"; document.getElementById("wordInput").value = ""; document.getElementById("output").innerHTML = ""; }
+function escapeHTML(text) { const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
+function cleanWordList(text) { return text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").split(/\s+/).filter(word => word.length > 0); }
+function renderMath() { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById("output")]); }
+function analyze() {
+  const word = document.getElementById("wordInput").value.trim().toLowerCase();
+  const output = document.getElementById("output"), documents = getDocuments();
+  const maxDf = Number(document.getElementById("thresholdInput").value);
+  if (!documents.length) { output.innerHTML = "<p class='no'>Please add at least one document.</p>"; return; }
+  if (!word) { output.innerHTML = "<p class='no'>Please enter a word to analyze.</p>"; return; }
+  if (Number.isNaN(maxDf) || maxDf <= 0 || maxDf > 1) { output.innerHTML = "<p class='no'>Please enter a threshold between 0.1 and 1.</p>"; return; }
+  const safeWord = escapeHTML(word);
+  const counts = documents.map((doc, i) => { const words = cleanWordList(doc); return { doc: `Doc ${i + 1}`, text: doc, count: words.filter(w => w === word).length }; });
+  const N = documents.length, nt = counts.filter(row => row.count > 0).length, tfDoc1 = counts[0].count;
+  let html = `<h2>Word Analysis Table</h2><div style="overflow-x:auto"><table><thead><tr><th>Document</th><th>Text</th><th>Times "${safeWord}" appears</th><th>Contains word?</th></tr></thead><tbody>`;
+  counts.forEach(row => { html += `<tr><td>${row.doc}</td><td>${escapeHTML(row.text)}</td><td>${row.count}</td><td class="${row.count > 0 ? "yes" : "no"}">${row.count > 0 ? "Yes" : "No"}</td></tr>`; });
+  html += "</tbody></table></div>";
+  if (nt === 0) { output.innerHTML = html + `<div class="explanation"><p class="no">The word "<b>${safeWord}</b>" does not appear in the documents, so there is no TF-IDF score to calculate.</p></div>`; return; }
+  const idf = Math.log(N / nt), tfidf = tfDoc1 * idf, documentPercentage = (nt / N) * 100, signalPercentage = 100 - documentPercentage, thresholdPercentage = maxDf * 100;
+  const isStopWord = STOP_WORDS.includes(word);
+  let classification, className, explanation;
+  if (isStopWord) { classification = "GENERAL STOP WORD: NOISE"; className = "noise"; explanation = `The word "${safeWord}" is a general English stop word, so it is removed as noise.`; }
+  else if ((nt / N) > maxDf) { classification = "CORPUS STOP WORD: NOISE"; className = "noise"; explanation = `The word "${safeWord}" appears in ${nt} of ${N} documents (${documentPercentage.toFixed(0)}%), above the ${thresholdPercentage.toFixed(0)}% threshold.`; }
+  else if ((nt / N) > .50) { classification = "WEAK SIGNAL / POSSIBLE NOISE"; className = "neutral"; explanation = `The word "${safeWord}" appears in ${documentPercentage.toFixed(0)}% of the documents, so it is shared by many documents.`; }
+  else { classification = "SIGNAL"; className = "signal"; explanation = `The word "${safeWord}" appears in only ${nt} of ${N} documents (${documentPercentage.toFixed(0)}%), making it a useful signal.`; }
+  html += `<div class="signal-card"><h2>Signal and Noise Check</h2><p>Classification: <span class="${className}">${classification}</span></p><p>Corpus frequency: <b>${nt} / ${N}</b> documents (${documentPercentage.toFixed(0)}%)</p><p>Corpus-noise threshold: <b>${thresholdPercentage.toFixed(0)}%</b></p><div class="meter-label"><span>Noise: common across documents</span><span>${documentPercentage.toFixed(0)}%</span></div><div class="meter"><div class="meter-fill noise-fill" style="width:${documentPercentage}%"></div></div><div class="meter-label"><span>Signal: specific to fewer documents</span><span>${signalPercentage.toFixed(0)}%</span></div><div class="meter"><div class="meter-fill signal-fill" style="width:${signalPercentage}%"></div></div><p>${explanation}</p></div>`;
+  html += `<div class="explanation"><h2>TF-IDF Explanation</h2><p>The word "<b>${safeWord}</b>" appears in <b>${nt}</b> out of <b>${N}</b> documents. In Document 1, it appears <b>${tfDoc1}</b> time(s).</p><div class="worked">$$w_{\\text{${safeWord}},d_1} = ${tfDoc1} \\times \\log\\left(\\frac{${N}}{${nt}}\\right) = ${tfDoc1} \\times ${idf.toFixed(2)} = ${tfidf.toFixed(2)}$$</div><p>A higher IDF means a word is rarer and therefore a stronger signal.</p></div>`;
+  output.innerHTML = html; renderMath();
+}
+function compareSimilarity() {
+  const output = document.getElementById("output"), documents = getDocuments();
+  if (documents.length < 2) { output.innerHTML = "<p class='no'>Please provide at least two documents to compare similarity.</p>"; return; }
+  const tokenized = documents.map(cleanWordList), vocab = Array.from(new Set(tokenized.flat())), N = documents.length, df = {};
+  vocab.forEach(term => df[term] = tokenized.filter(words => words.includes(term)).length);
+  const vectors = tokenized.map(words => vocab.map(term => words.filter(w => w === term).length * Math.log(N / df[term])));
+  function cosine(a,b) { let dot=0, magA=0, magB=0; for(let i=0;i<a.length;i++){dot+=a[i]*b[i]; magA+=a[i]*a[i]; magB+=b[i]*b[i];} return magA === 0 || magB === 0 ? 0 : dot / (Math.sqrt(magA) * Math.sqrt(magB)); }
+  let html = `<div class="signal-card"><h2>Document Similarity to Document 1</h2><p>Each document is transformed into a TF-IDF vector and compared with Document 1 using cosine similarity.</p><div style="overflow-x:auto"><table><thead><tr><th>Document</th><th>Text</th><th>Similarity to Doc 1</th><th>Meaning</th></tr></thead><tbody>`;
+  vectors.forEach((vec,i) => { const score=cosine(vectors[0],vec); const meaning=i===0 ? "Same document" : score >= .7 ? "Highly similar" : score >= .3 ? "Somewhat similar" : score > 0 ? "Weakly related" : "No shared signal words"; html += `<tr><td>Doc ${i+1}</td><td>${escapeHTML(documents[i])}</td><td><b>${score.toFixed(3)}</b></td><td>${meaning}</td></tr><tr><td colspan="4"><div class="meter"><div class="meter-fill signal-fill" style="width:${(score*100).toFixed(0)}%"></div></div></td></tr>`; });
+  html += "</tbody></table></div><p><b>Sentence for class:</b> When two documents use the same important words, their TF-IDF vectors point in a similar direction, so cosine similarity is closer to 1.</p></div>";
+  output.innerHTML = html;
+}
+document.getElementById("wordInput").addEventListener("keydown", event => { if (event.key === "Enter") analyze(); });
 </script>
 </body>
 </html>
