@@ -108,12 +108,12 @@ The customer said the battery life was excellent.</textarea>
       <label for="wordInput">Word to analyze</label>
       <div class="controls">
         <input type="text" id="wordInput" placeholder="For example: contract">
-        <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05" value="0.60" title="Corpus noise threshold">
+        <input type="number" id="thresholdInput" min="0.1" max="1" step="0.05" value="0.80" title="Corpus noise threshold">
         <button onclick="analyze()">Analyze</button>
         <button class="btn-secondary" onclick="compareSimilarity()">Compare similarity</button>
         <button class="btn-secondary" onclick="resetDocs()">Reset samples</button>
       </div>
-      <div class="hint">Corpus-noise threshold: <code>0.60</code> means words found in more than 60% of documents are treated as corpus noise.</div>
+      <div class="hint">Corpus-noise threshold: <code>0.80</code> means words found in more than 80% of documents are treated as corpus noise.</div>
       <div id="output"></div>
     </section>
   </div>
@@ -128,7 +128,7 @@ The customer requested a refund for a damaged product.
 The customer said the battery life was excellent.`;
 const STOP_WORDS = ["a","an","and","are","as","at","be","both","by","for","from","had","has","have","he","her","his","in","is","it","its","of","on","or","our","she","so","the","their","them","they","this","that","to","was","were","will","with","you"];
 function getDocuments() { return document.getElementById("docsInput").value.split("\n").map(s => s.trim()).filter(s => s.length > 0); }
-function resetDocs() { document.getElementById("docsInput").value = SAMPLE_DOCS; document.getElementById("thresholdInput").value = "0.60"; document.getElementById("wordInput").value = ""; document.getElementById("output").innerHTML = ""; }
+function resetDocs() { document.getElementById("docsInput").value = SAMPLE_DOCS; document.getElementById("thresholdInput").value = "0.80"; document.getElementById("wordInput").value = ""; document.getElementById("output").innerHTML = ""; }
 function escapeHTML(text) { const div = document.createElement("div"); div.textContent = text; return div.innerHTML; }
 function cleanWordList(text) { return text.toLowerCase().replace(/[^a-z0-9\s-]/g, "").split(/\s+/).filter(word => word.length > 0); }
 function renderMath() { if (window.MathJax && MathJax.typesetPromise) MathJax.typesetPromise([document.getElementById("output")]); }
